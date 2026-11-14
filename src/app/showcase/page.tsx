@@ -5,7 +5,7 @@ export default function Showcase() {
     <main className="mx-auto max-w-5xl px-4 py-12">
       <h1 className="text-3xl font-bold">Showcase</h1>
 
-      <h2 className="mt-10 text-xl font-semibold">Gallery</h2>
+      <h2 id="gallery" className="mt-10 scroll-mt-20 text-xl font-semibold">Gallery</h2>
       <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
         {gallery.length === 0
           ? Array.from({ length: 6 }).map((_, i) => (
@@ -16,7 +16,7 @@ export default function Showcase() {
             ))}
       </div>
 
-      <h2 className="mt-12 text-xl font-semibold">Projects</h2>
+      <h2 id="projects" className="mt-12 scroll-mt-20 text-xl font-semibold">Projects</h2>
       <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {projects.map((p) => (
           <article key={p.title} className="rounded border p-4">

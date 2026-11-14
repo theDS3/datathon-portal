@@ -1,20 +1,25 @@
-"use client";
-import { useEffect, useState } from "react";
-import QRCode from "qrcode";
-import { mockUser } from "@/lib/mock";
+import { Suspense } from "react";
+import { redirect } from "next/navigation";
+import ParticipantQR from "@/components/ParticipantQR";
+import { getCurrentParticipant } from "@/lib/participant";
 
-export default function Dashboard() {
-  const [qr, setQr] = useState("");
-
-  useEffect(() => {
-    QRCode.toDataURL(mockUser.qrToken, { width: 256 }).then(setQr);
-  }, []);
+async function ParticipantDashboard() {
+  const participant = await getCurrentParticipant();
+  if (!participant) redirect("/login");
 
   return (
     <main className="mx-auto mt-12 max-w-md px-4 text-center">
-      <h1 className="text-2xl font-bold">Welcome, {mockUser.name}</h1>
+      <h1 className="text-2xl font-bold">Welcome, {participant.name}</h1>
       <p className="mt-2 text-sm">Show this QR code at the meal line.</p>
-      {qr && <img src={qr} alt="Your QR code" className="mx-auto mt-6" />}
+      <ParticipantQR token={participant.qrToken} />
     </main>
+  );
+}
+
+export default function Dashboard() {
+  return (
+    <Suspense fallback={<main className="mx-auto mt-12 max-w-md px-4 text-center">Loading your dashboard...</main>}>
+      <ParticipantDashboard />
+    </Suspense>
   );
 }

@@ -8,15 +8,41 @@ export default function AuthForm({ mode }: { mode: "login" | "register" }) {
   const [as, setAs] = useState<"participant" | "admin">("participant");
   const [form, setForm] = useState({ name: "", email: "", password: "" });
   const [error, setError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
   const update = (k: string, v: string) => setForm({ ...form, [k]: v });
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-    // TODO: fetch(`/api/auth/${mode}`, { method: "POST", ... }) once the DB is connected,
-    // then redirect using the role the API returns.
-    router.push(mode === "login" && as === "admin" ? "/admin" : "/dashboard");
+    setSubmitting(true);
+
+    try {
+      const response = await fetch(`/api/auth/${mode}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(mode === "register" ? form : { email: form.email, password: form.password }),
+      });
+      const data = (await response.json().catch(() => null)) as
+        | { error?: string; role?: "participant" | "admin" }
+        | null;
+
+      if (!response.ok) {
+        setError(data?.error ?? "Unable to continue. Please try again.");
+        return;
+      }
+      if (data?.role !== "participant" && data?.role !== "admin") {
+        setError("The server returned an invalid response. Please try again.");
+        return;
+      }
+
+      router.replace(data.role === "admin" ? "/admin" : "/dashboard");
+      router.refresh();
+    } catch {
+      setError("Unable to connect. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -47,16 +73,16 @@ export default function AuthForm({ mode }: { mode: "login" | "register" }) {
       <input className="rounded border p-2" type="password" placeholder="Password" minLength={8} required
         value={form.password} onChange={(e) => update("password", e.target.value)} />
 
-      {error && <p className="text-sm text-red-600">{error}</p>}
-      <button className="rounded bg-black p-2 text-white">
-        {mode === "login" ? "Sign in" : "Sign up"}
+      {error && <p role="alert" className="text-sm text-red-600">{error}</p>}
+      <button disabled={submitting} className="rounded bg-black p-2 text-white disabled:opacity-60">
+        {submitting ? "Please wait..." : mode === "login" ? "Sign in" : "Sign up"}
       </button>
 
       <p className="text-center text-sm">
         {mode === "login" ? (
-          <>No account? <Link href="/signup" className="underline">Sign up</Link></>
+          <>No account? <Link href="/register" className="underline">Sign up</Link></>
         ) : (
-          <>Already registered? <Link href="/signin" className="underline">Sign in</Link></>
+          <>Already registered? <Link href="/login" className="underline">Sign in</Link></>
         )}
       </p>
     </form>

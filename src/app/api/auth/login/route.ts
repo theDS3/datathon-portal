@@ -5,10 +5,19 @@ import { User } from "@/models/User";
 import { createSession } from "@/lib/auth";
 
 export async function POST(req: Request) {
-  const { email, password } = await req.json();
+  const body = (await req.json().catch(() => null)) as
+    | { email?: unknown; password?: unknown }
+    | null;
+  const email = typeof body?.email === "string" ? body.email.trim().toLowerCase() : "";
+  const password = typeof body?.password === "string" ? body.password : "";
+
+  if (!email || !password) {
+    return NextResponse.json({ error: "Email and password are required." }, { status: 400 });
+  }
+
   await connectDB();
 
-  const user = await User.findOne({ email: String(email).toLowerCase() });
+  const user = await User.findOne({ email });
   const valid = user && (await bcrypt.compare(password, user.passwordHash));
 
   if (!valid) {
